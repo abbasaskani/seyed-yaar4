@@ -32,7 +32,7 @@ def _module_available(name: str, extra_paths: list[Path] | None = None) -> bool:
         sys.path[:] = original
 
 
-def choose_run_command(latest_root: str, passthrough: list[str]) -> tuple[list[str], dict[str, str]]:
+def choose_run_command(latest_root: str, passthrough: list[str], *, allow_missing_core: bool = False) -> tuple[list[str] | None, dict[str, str], str | None]:
     root = repo_root()
     backend_dir = root / 'backend'
     core_run = backend_dir / 'seydyaar' / 'pipeline' / 'run_daily.py'
@@ -41,16 +41,20 @@ def choose_run_command(latest_root: str, passthrough: list[str]) -> tuple[list[s
     env['PYTHONPATH'] = os.pathsep.join(py_paths + ([env['PYTHONPATH']] if env.get('PYTHONPATH') else []))
 
     if _module_available('seydyaar', [root, backend_dir]):
-        return [sys.executable, '-m', 'seydyaar', 'run-daily', '--out', latest_root] + passthrough, env
+        return [sys.executable, '-m', 'seydyaar', 'run-daily', '--out', latest_root] + passthrough, env, None
 
     if core_run.exists():
-        return [sys.executable, str(core_run), '--out', latest_root] + passthrough, env
+        return [sys.executable, str(core_run), '--out', latest_root] + passthrough, env, None
 
-    raise SystemExit(
+    msg = (
         'Could not find the Seyd-Yaar core backend. Checked importable module "seydyaar" and '
-        f'script path {core_run}. Make sure the target repository contains backend/seydyaar/... '
-        'or an installable seydyaar package.'
+        f'script path {core_run}. This repository looks like an overlay/tools bundle only. '
+        'To run the full daily pipeline, merge these files into the main repo that contains '
+        'backend/seydyaar/... or install an importable seydyaar package.'
     )
+    if allow_missing_core:
+        return None, env, msg
+    raise SystemExit(msg)
 
 
 def has_flag(argv: list[str], *flags: str) -> bool:
@@ -67,6 +71,7 @@ def main():
     p.add_argument('--aoi-geojson', default=None, help='GeoJSON file used to derive bbox automatically')
     p.add_argument('--bbox', default=None, help='Explicit bbox as lat_min,lat_max,lon_min,lon_max')
     p.add_argument('--utm-epsg', default=None, help='Explicit UTM EPSG passed through when supported by the core backend')
+    p.add_argument('--skip-if-missing-core', action='store_true', help='Exit successfully and only print a notice when the core backend is absent')
     p.add_argument('remainder', nargs=argparse.REMAINDER, help='Arguments after -- are passed to the core daily runner')
     args = p.parse_args()
 
@@ -85,9 +90,12 @@ def main():
     if utm_epsg and not has_flag(passthrough, '--utm-epsg'):
         passthrough += ['--utm-epsg', str(utm_epsg)]
 
-    cmd, env = choose_run_command(args.latest_root, passthrough)
+    cmd, env, missing_core_msg = choose_run_command(args.latest_root, passthrough, allow_missing_core=args.skip_if_missing_core)
     if aoi_details:
         print('▶ AOI resolved:', aoi_details)
+    if cmd is None:
+        print('⚠', missing_core_msg)
+        return
     print('▶', ' '.join(cmd))
     rc = subprocess.call(cmd, env=env)
     if rc != 0:

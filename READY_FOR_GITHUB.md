@@ -42,3 +42,8 @@ python backend/tools/run_daily_with_postprocess.py \
 - Temporal summaries are built for PHAB and, if present, PCATCH.
 - UI reads from meta/manifest/report/ui_config with fallbacks.
 - Stable hotspot exports (JSON/GeoJSON/CSV) are included in postprocess outputs.
+
+
+## Overlay-only note
+
+This bundle contains the docs/tools overlay. If `backend/seydyaar/...` is absent, GitHub Actions will validate the overlay and skip the full daily pipeline instead of failing.

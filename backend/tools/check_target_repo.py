@@ -29,6 +29,9 @@ def main(argv=None):
         'core_backend_present': [],
         'core_backend_missing': [],
         'ready_for_overlay': True,
+        'has_core_backend': False,
+        'overlay_only_repo': False,
+        'standalone_runnable': False,
     }
     for rel in REQUIRED_DOCS:
         p = root / rel
@@ -38,6 +41,9 @@ def main(argv=None):
         (out['core_backend_present'] if p.exists() else out['core_backend_missing']).append(rel)
     if out['required_docs_missing']:
         out['ready_for_overlay'] = False
+    out['has_core_backend'] = len(out['core_backend_present']) > 0
+    out['overlay_only_repo'] = out['ready_for_overlay'] and not out['has_core_backend']
+    out['standalone_runnable'] = out['ready_for_overlay'] and out['has_core_backend']
     print(json.dumps(out, ensure_ascii=False, indent=2))
 
 if __name__ == '__main__':

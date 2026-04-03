@@ -58,3 +58,8 @@ It supports:
 - `extra_args`
 
 So you no longer have to type the bbox manually every run when a region config or GeoJSON is available.
+
+
+## Overlay-only note
+
+This bundle contains the docs/tools overlay. If `backend/seydyaar/...` is absent, GitHub Actions will validate the overlay and skip the full daily pipeline instead of failing.
