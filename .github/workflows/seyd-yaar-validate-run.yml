@@ -133,19 +133,29 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          EXTRA=""
-          if [ "${{ github.event.inputs.include_pcatch }}" = "true" ]; then EXTRA="--include-pcatch"; fi
-          EXTRA_ARGS="${{ github.event.inputs.extra_args }}"
-          python backend/tools/run_daily_with_postprocess.py \
-            --latest-root docs/latest \
-            ${EXTRA} \
-            --top-n "${{ github.event.inputs.top_n }}" \
-            -- \
-            --past-days "${{ github.event.inputs.past_days }}" \
-            --future-days "${{ github.event.inputs.future_days }}" \
-            --step-hours "${{ github.event.inputs.step_hours }}" \
-            --species "${{ github.event.inputs.species }}" \
-            ${EXTRA_ARGS}
+          EXTRA=()
+          if [ "${{ github.event.inputs.include_pcatch }}" = "true" ]; then EXTRA+=(--include-pcatch); fi
+          if [ -n "${{ github.event.inputs.aoi_geojson_path }}" ]; then EXTRA+=(--aoi-geojson "${{ github.event.inputs.aoi_geojson_path }}"); fi
+          if [ -n "${{ github.event.inputs.utm_epsg }}" ]; then EXTRA+=(--utm-epsg "${{ github.event.inputs.utm_epsg }}"); fi
+          CMD=(python backend/tools/run_daily_with_postprocess.py
+            --latest-root docs/latest
+            --skip-if-missing-core
+            --region-config "${{ github.event.inputs.region_config_path }}"
+            "${EXTRA[@]}"
+            --top-n "${{ github.event.inputs.top_n }}"
+            --
+            --past-days "${{ github.event.inputs.past_days }}"
+            --future-days "${{ github.event.inputs.future_days }}"
+            --step-hours "${{ github.event.inputs.step_hours }}"
+            --species "${{ github.event.inputs.species }}")
+          if [ -n "${{ github.event.inputs.extra_args }}" ]; then
+            # shellcheck disable=SC2206
+            EXTRA_ARGS=( ${{ github.event.inputs.extra_args }} )
+            CMD+=("${EXTRA_ARGS[@]}")
+          fi
+          printf '▶ %q ' "${CMD[@]}"
+          printf '\n'
+          "${CMD[@]}"
 
       - name: Upload docs/latest artifact
         uses: actions/upload-artifact@v4

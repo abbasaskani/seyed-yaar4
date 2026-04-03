@@ -95,6 +95,21 @@ def main():
         print('▶ AOI resolved:', aoi_details)
     if cmd is None:
         print('⚠', missing_core_msg)
+        latest_root = Path(args.latest_root)
+        latest_root.mkdir(parents=True, exist_ok=True)
+        notice = latest_root / 'OVERLAY_ONLY_NOTICE.txt'
+        notice.write_text((missing_core_msg or '') + '\n')
+        status = {
+            'overlay_only_repo': True,
+            'core_backend_found': False,
+            'latest_root': str(latest_root),
+            'message': missing_core_msg,
+        }
+        try:
+            import json
+            (latest_root / 'overlay_status.json').write_text(json.dumps(status, ensure_ascii=False, indent=2) + '\n')
+        except Exception:
+            pass
         return
     print('▶', ' '.join(cmd))
     rc = subprocess.call(cmd, env=env)
