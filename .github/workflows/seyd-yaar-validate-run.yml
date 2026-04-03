@@ -1,0 +1,133 @@
+name: Seyd-Yaar Validate and Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_pipeline:
+        description: Run data generation after validation
+        required: true
+        default: true
+        type: boolean
+      include_pcatch:
+        description: Build PCATCH summaries too
+        required: true
+        default: true
+        type: boolean
+      species:
+        description: Species to run
+        required: true
+        default: skipjack
+        type: string
+      past_days:
+        description: Past days
+        required: true
+        default: '1'
+        type: string
+      future_days:
+        description: Future days
+        required: true
+        default: '5'
+        type: string
+      step_hours:
+        description: Step hours
+        required: true
+        default: '12'
+        type: string
+      top_n:
+        description: Top stable points exported per key
+        required: true
+        default: '20'
+        type: string
+  push:
+    branches: [main, master]
+    paths:
+      - 'docs/**'
+      - 'backend/tools/**'
+      - '.github/workflows/**'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'backend/tools/**'
+      - '.github/workflows/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install numpy
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f pyproject.toml ]; then pip install -e .; fi
+
+      - name: Preflight target repo
+        run: python backend/tools/check_target_repo.py .
+
+      - name: Validate release bundle
+        run: python backend/tools/validate_release.py .
+
+  run_pipeline:
+    needs: validate
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_pipeline == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install numpy
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f pyproject.toml ]; then pip install -e .; fi
+
+      - name: Run pipeline + postprocess
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXTRA=""
+          if [ "${{ github.event.inputs.include_pcatch }}" = "true" ]; then EXTRA="--include-pcatch"; fi
+          python backend/tools/run_daily_with_postprocess.py \
+            --latest-root docs/latest \
+            ${EXTRA} \
+            --top-n "${{ github.event.inputs.top_n }}" \
+            -- \
+            --past-days "${{ github.event.inputs.past_days }}" \
+            --future-days "${{ github.event.inputs.future_days }}" \
+            --step-hours "${{ github.event.inputs.step_hours }}" \
+            --species "${{ github.event.inputs.species }}"
+
+      - name: Upload docs/latest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-latest
+          path: docs/latest
+          if-no-files-found: warn

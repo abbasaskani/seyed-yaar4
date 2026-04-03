@@ -1,0 +1,68 @@
+{
+  "pipeline": {
+    "past_days": 1,
+    "future_days": 5,
+    "step_hours": 12,
+    "play_hours": 12,
+    "window_hours": 72,
+    "summary_threshold": 0.7,
+    "default_species": "skipjack",
+    "persist_window_label": "3day"
+  },
+  "ui": {
+    "default_model": "scoring",
+    "default_map": "phab",
+    "default_temporal_mode": "stable_hotspot",
+    "default_grid_mode": "utm",
+    "grid_enabled": true,
+    "temporal_tint_enabled": true,
+    "tint_metric": "duration"
+  },
+  "features": {
+    "o2": true,
+    "sss": true,
+    "mld": true,
+    "thermocline_proxy": true,
+    "nearest_surface_depth": true,
+    "chl_3day": true,
+    "npp_lag": true,
+    "front_fusion": true,
+    "mesoscale_metrics": true,
+    "ops_layer": true,
+    "pcatch_enabled": true,
+    "pcatch_default": false
+  },
+  "smoothing": {
+    "median_size": 3,
+    "gaussian_sigma": 1.0,
+    "front_smoothing": "median_then_gaussian"
+  },
+  "weights": {
+    "stable_hotspot": {
+      "mean": 0.4,
+      "p90": 0.2,
+      "persist": 0.2,
+      "stability": 0.1,
+      "duration": 0.1
+    },
+    "pcatch": {
+      "phab": 0.7,
+      "ops": 0.3
+    }
+  },
+  "operations": {
+    "wave_height": true,
+    "wave_period": true,
+    "wave_direction": true,
+    "stokes_drift": true,
+    "smoc": true
+  },
+  "exports": {
+    "top_n": 20,
+    "json": true,
+    "geojson": true,
+    "csv": true,
+    "manifest": true,
+    "ui_config": true
+  }
+}
