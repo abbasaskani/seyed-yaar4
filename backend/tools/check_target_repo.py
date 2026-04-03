@@ -9,6 +9,9 @@ REQUIRED_DOCS = [
     'docs/sw.js',
     '.github/workflows/seyd-yaar-validate-run.yml',
     'backend/tools/requirements-smoke.txt',
+    'backend/tools/aoi_utils.py',
+    'backend/tools/region_config.json',
+    'backend/tools/default_aoi.geojson',
 ]
 OPTIONAL_CORE = [
     'backend/seydyaar/pipeline/run_daily.py',

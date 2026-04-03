@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json, tempfile
+import json, tempfile, subprocess, sys
 from pathlib import Path
 import numpy as np
 try:
     from .build_temporal_summary_generic import build
     from .run_postprocess_all import main as post_main
     from .scoring_feature_engine import build_from_raw_fields, component_report
+    from .aoi_utils import bbox_from_geojson_path
 except Exception:
     from build_temporal_summary_generic import build
     from run_postprocess_all import main as post_main
     from scoring_feature_engine import build_from_raw_fields, component_report
+    from aoi_utils import bbox_from_geojson_path
+
 
 def write_bin(p, arr, dtype="f32"):
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -18,13 +21,16 @@ def write_bin(p, arr, dtype="f32"):
     elif dtype == "u16": np.asarray(arr, dtype=np.uint16).tofile(p)
     else: np.asarray(arr, dtype=np.uint8).tofile(p)
 
+
 def assert_true(name, cond):
     if not cond:
         raise AssertionError(f"smoke assertion failed: {name}")
 
+
 def main():
     with tempfile.TemporaryDirectory() as td:
-        root = Path(td)/'docs'/'latest'
+        td = Path(td)
+        root = td/'docs'/'latest'
         species_dir = root/'runs'/'main'/'variants'/'auto'/'species'/'skipjack'
         times = ['20260401_0600Z','20260401_1800Z','20260402_0600Z','20260402_1800Z','20260403_0600Z','20260403_1800Z']
         W,H = 8,6
@@ -48,7 +54,6 @@ def main():
             write_bin(tdir/'pcatch_scoring_f32.bin', np.clip(base*0.8 + i*0.015,0,1))
         for key in ('phab_scoring','phab_frontplus','pcatch_scoring'):
             build(species_dir/'meta.json', key, window_hours=72, step_hours=12, threshold=0.7, top_n=10)
-        import sys
         old = sys.argv[:]
         try:
             sys.argv = ['run_postprocess_all.py', str(root), '--include-pcatch']
@@ -63,6 +68,12 @@ def main():
         raw = {'sst':base,'chl':base*0.7+0.1,'sla':base*0.2,'u':base*0.1,'v':base*0.05,'o2':base,'sss':base,'mld':base,'thermocline':base,'temporal_persistence':base, 'wave_height_score': np.full_like(base, 0.8), 'wave_period_score': np.full_like(base, 0.6), 'ow': np.full_like(base, 0.2)}
         comps = build_from_raw_fields(raw)
         rep = component_report(comps)
+        geojson_path = td/'aoi.geojson'
+        geojson_path.write_text(json.dumps({
+            'type': 'FeatureCollection',
+            'features': [{'type': 'Feature', 'properties': {}, 'geometry': {'type': 'Polygon', 'coordinates': [[[60.0, 23.0],[60.0, 16.0],[65.0,16.0],[65.0,23.0],[60.0,23.0]]]}}]
+        }), encoding='utf-8')
+        bbox = bbox_from_geojson_path(geojson_path)
         out = {
             'has_manifest': manifest.exists(),
             'has_report': report.exists(),
@@ -80,6 +91,7 @@ def main():
             'report_has_config_by_key': bool((rpt.get('by_species', {}).get('skipjack') or {}).get('summary_config_by_key', {}).get('phab_scoring')),
             'phab_mean': round(rep['phab']['mean'], 4) if rep['phab']['mean'] is not None else None,
             'pcatch_mean': round(rep['pcatch']['mean'],4) if rep['pcatch']['mean'] is not None else None,
+            'aoi_bbox': bbox,
         }
         assert_true('manifest', out['has_manifest'])
         assert_true('report', out['has_report'])
@@ -95,6 +107,7 @@ def main():
         assert_true('report_has_config_by_key', out['report_has_config_by_key'])
         assert_true('phab_mean', out['phab_mean'] is not None)
         assert_true('pcatch_mean', out['pcatch_mean'] is not None)
+        assert_true('aoi_bbox', bbox['lat_min'] == 16.0 and bbox['lon_max'] == 65.0)
         print(json.dumps(out))
 
 if __name__ == '__main__':

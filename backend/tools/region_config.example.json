@@ -1,11 +1,12 @@
 {
   "region_name": "arabian_sea_example",
+  "aoi_geojson": "../../map (5).geojson",
   "bbox": {
-    "lat_min": 5.0,
-    "lat_max": 27.0,
-    "lon_min": 50.0,
-    "lon_max": 77.0
+    "lat_min": 16.387719633314063,
+    "lat_max": 23.53110795430304,
+    "lon_min": 60.22459770549662,
+    "lon_max": 65.6614592964082
   },
-  "utm_epsg": 32643,
-  "notes": "Example AOI only. Real AOI must match the core backend run_daily/scoring/ocean_features implementation in the target repository."
+  "utm_epsg": 32640,
+  "notes": "You can either keep bbox here or point to an AOI GeoJSON. If both exist, explicit CLI flags win, then region config bbox, then bbox derived from aoi_geojson."
 }

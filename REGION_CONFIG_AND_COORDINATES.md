@@ -1,39 +1,50 @@
 # Region / Coordinates configuration
 
-## Important
-This bundle is an overlay bundle. The actual analysis extent (AOI / bbox) is owned by the **core backend** in the target repository.
-That means the final source of truth for coordinates is usually inside the main repo's core files such as:
-- `backend/seydyaar/pipeline/run_daily.py`
-- `backend/seydyaar/models/ocean_features.py`
-- any dataset/config file that defines the AOI or bbox
+## What changed
+This overlay can now derive the backend AOI automatically before calling the core daily runner.
+That means you do **not** have to manually type bbox values on every run anymore.
 
-## What exists in this bundle
-### 1) UI-only bbox controls
-In `docs/app.html` there are UI fields such as:
-- `bboxLatMin`
-- `bboxLatMax`
-- `bboxLonMin`
-- `bboxLonMax`
-- `aoiPoints`
-- `filterAoiPoints`
+## Supported sources for AOI
+The wrapper `backend/tools/run_daily_with_postprocess.py` accepts AOI from three sources, in this priority order:
 
-These are **frontend / filtering / view controls** and do **not** define the backend analysis extent by themselves.
+1. Explicit CLI flags
+   - `--bbox lat_min,lat_max,lon_min,lon_max`
+   - `--utm-epsg 32640`
+2. Region config JSON
+   - `--region-config backend/tools/region_config.json`
+3. AOI GeoJSON
+   - `--aoi-geojson path/to/aoi.geojson`
+   - or `aoi_geojson` inside the region config
 
-### 2) Overlay-side example region config
-This bundle includes:
+## Recommended setup
+Create a real config file such as:
+- `backend/tools/region_config.json`
+
+You can copy from:
 - `backend/tools/region_config.example.json`
 
-This is an example/template only.
-
-## Recommended way to pass coordinates on GitHub Actions
-The workflow in this bundle exposes `extra_args`.
-Use it to pass AOI arguments **only if the core `run_daily.py` in the target repo supports them**.
-
 Example:
-```bash
---bbox 5,27,50,77 --utm-epsg 32643
+```json
+{
+  "region_name": "arabian_sea",
+  "aoi_geojson": "default_aoi.geojson",
+  "utm_epsg": 32640
+}
 ```
 
-## If your target repo does NOT support bbox flags yet
-Then coordinates must be set in the target repo's core source/config.
-This overlay bundle cannot magically define the AOI for the full backend if the core files do not expose that option.
+The wrapper will derive the bbox from the polygon automatically.
+
+## Your current AOI example
+The attached AOI polygon corresponds to this bbox:
+- lat_min = 16.387719633314063
+- lat_max = 23.53110795430304
+- lon_min = 60.22459770549662
+- lon_max = 65.6614592964082
+
+## Important limitation
+The overlay can only pass AOI arguments into the **core backend**.
+So the target repository still needs one of these to be true:
+- the `seydyaar` package is importable, or
+- `backend/seydyaar/pipeline/run_daily.py` exists and accepts `--bbox` / `--utm-epsg`
+
+If the core runner does not support AOI arguments yet, then the underlying repo still needs a small patch in its real `run_daily.py` argparse layer.

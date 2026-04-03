@@ -1,0 +1,6 @@
+{
+  "region_name": "arabian_sea_default",
+  "aoi_geojson": "default_aoi.geojson",
+  "utm_epsg": 32640,
+  "notes": "Default AOI loaded automatically by the overlay wrapper. Edit this file or replace default_aoi.geojson when you want a different region."
+}

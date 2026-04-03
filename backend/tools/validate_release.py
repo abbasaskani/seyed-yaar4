@@ -57,6 +57,7 @@ def main():
         TOOLS / 'qa_smoke_test.py',
         TOOLS / 'validate_release.py',
         TOOLS / 'check_target_repo.py',
+        TOOLS / 'aoi_utils.py',
     ]
     check_py(py_files)
     check_js(DOCS / 'app.js')

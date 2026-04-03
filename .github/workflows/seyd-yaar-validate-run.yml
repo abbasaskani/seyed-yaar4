@@ -38,8 +38,23 @@ on:
         required: true
         default: '20'
         type: string
+      region_config_path:
+        description: Optional region JSON config path (for example backend/tools/region_config.json)
+        required: false
+        default: 'backend/tools/region_config.json'
+        type: string
+      aoi_geojson_path:
+        description: Optional AOI GeoJSON path used to derive bbox automatically
+        required: false
+        default: ''
+        type: string
+      utm_epsg:
+        description: Optional UTM EPSG to pass through when supported by core backend
+        required: false
+        default: ''
+        type: string
       extra_args:
-        description: Extra args passed through to python -m seydyaar run-daily (for example --bbox 5,27,50,77 --utm-epsg 32643 if supported by the target repo)
+        description: Extra args passed through to the core daily runner (for example --bbox 16,24,60,66 --utm-epsg 32640)
         required: false
         default: ''
         type: string
