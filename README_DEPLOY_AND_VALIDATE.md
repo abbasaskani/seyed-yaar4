@@ -1,46 +1,43 @@
-# Deploy and validate
+# Deploy and validate overlay bundle
 
-## 1) Overlay this bundle on the repository root
-Copy the contents of this bundle into the repository root so these paths exist:
-- `docs/app.html`
-- `docs/app.js`
-- `docs/sw.js`
-- `backend/tools/...`
+## 1) Overlay on the main repository
+Extract this bundle at the **root of the main repository** and allow files to replace existing ones.
 
-## 2) Preflight check the target repository
+## 2) Preflight
 Run:
 ```bash
 python backend/tools/check_target_repo.py .
+python backend/tools/validate_release.py .
 ```
-This reports whether the repository already contains the core backend files that are **not** shipped in this bundle.
 
-## 3) Validate the bundle after overlay
-Run:
-```bash
-python backend/tools/validate_release.py
+## 3) Coordinates / AOI
+This bundle does NOT own the final analysis extent by itself.
+See:
+- `REGION_CONFIG_AND_COORDINATES.md`
+- `backend/tools/region_config.example.json`
+
+If the target repo's core backend supports bbox flags, you can pass them via GitHub Actions `extra_args`, for example:
+```text
+--bbox 5,27,50,77 --utm-epsg 32643
 ```
-This checks:
-- Python compile for backend tools
-- `node --check` for `docs/app.js`
-- DOM id references between `app.html` and `app.js`
-- synthetic smoke test for summary/postprocess/scoring helpers
-- target repo structure report
 
-## 4) Run the generator
-Use the repository main generator as usual, or the wrapper:
+## 4) Local run
 ```bash
 python backend/tools/run_daily_with_postprocess.py --latest-root docs/latest --include-pcatch -- --past-days 1 --future-days 5 --step-hours 12 --species skipjack
 ```
 
-## 5) Run only postprocess if data already exist
+## 5) Postprocess only
 ```bash
 python backend/tools/run_postprocess_all.py docs/latest --include-pcatch
 ```
 
-## 6) Remaining blocker
-This bundle does **not** include direct patches to the core backend files under:
-- `backend/seydyaar/pipeline/run_daily.py`
-- `backend/seydyaar/models/scoring.py`
-- `backend/seydyaar/models/ocean_features.py`
+## 6) GitHub Actions
+The workflow is:
+- `.github/workflows/seyd-yaar-validate-run.yml`
 
-If those files exist in your repository, this bundle is ready to overlay and test on GitHub.
+It installs:
+- numpy
+- scipy
+- pyproj
+
+before running validation/smoke.

@@ -1,0 +1,11 @@
+{
+  "region_name": "arabian_sea_example",
+  "bbox": {
+    "lat_min": 5.0,
+    "lat_max": 27.0,
+    "lon_min": 50.0,
+    "lon_max": 77.0
+  },
+  "utm_epsg": 32643,
+  "notes": "Example AOI only. Real AOI must match the core backend run_daily/scoring/ocean_features implementation in the target repository."
+}

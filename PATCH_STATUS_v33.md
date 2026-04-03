@@ -1,0 +1,4 @@
+- Fixed GitHub Actions dependency gap by adding backend/tools/requirements-smoke.txt and updating workflow to install pyproj/numpy/scipy.
+- Added workflow extra_args passthrough for bbox/utm args if supported by the target repo core backend.
+- Added REGION_CONFIG_AND_COORDINATES.md and backend/tools/region_config.example.json to document where coordinates are controlled.
+- Removed __pycache__ from the bundle.

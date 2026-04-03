@@ -38,6 +38,11 @@ on:
         required: true
         default: '20'
         type: string
+      extra_args:
+        description: Extra args passed through to python -m seydyaar run-daily (for example --bbox 5,27,50,77 --utm-epsg 32643 if supported by the target repo)
+        required: false
+        default: ''
+        type: string
   push:
     branches: [main, master]
     paths:
@@ -72,7 +77,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
-          pip install numpy
+          pip install -r backend/tools/requirements-smoke.txt
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f pyproject.toml ]; then pip install -e .; fi
 
@@ -105,7 +110,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
-          pip install numpy
+          pip install -r backend/tools/requirements-smoke.txt
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f pyproject.toml ]; then pip install -e .; fi
 
@@ -115,6 +120,7 @@ jobs:
           set -euo pipefail
           EXTRA=""
           if [ "${{ github.event.inputs.include_pcatch }}" = "true" ]; then EXTRA="--include-pcatch"; fi
+          EXTRA_ARGS="${{ github.event.inputs.extra_args }}"
           python backend/tools/run_daily_with_postprocess.py \
             --latest-root docs/latest \
             ${EXTRA} \
@@ -123,7 +129,8 @@ jobs:
             --past-days "${{ github.event.inputs.past_days }}" \
             --future-days "${{ github.event.inputs.future_days }}" \
             --step-hours "${{ github.event.inputs.step_hours }}" \
-            --species "${{ github.event.inputs.species }}"
+            --species "${{ github.event.inputs.species }}" \
+            ${EXTRA_ARGS}
 
       - name: Upload docs/latest artifact
         uses: actions/upload-artifact@v4
