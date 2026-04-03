@@ -44,19 +44,3 @@ This bundle does **not** include direct patches to the core backend files under:
 - `backend/seydyaar/models/ocean_features.py`
 
 If those files exist in your repository, this bundle is ready to overlay and test on GitHub.
-
-
-## GitHub Actions workflow included
-This bundle now includes:
-- `.github/workflows/seyd-yaar-validate-run.yml`
-
-Typical flow on GitHub:
-1. push overlay to your main repo
-2. Actions tab → run **Seyd-Yaar Validate and Run** manually
-3. first run validates the bundle and optionally runs the generator + postprocess
-
-Manual local checks remain:
-```bash
-python backend/tools/check_target_repo.py .
-python backend/tools/validate_release.py .
-```

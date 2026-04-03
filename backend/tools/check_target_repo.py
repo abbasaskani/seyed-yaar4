@@ -7,7 +7,6 @@ REQUIRED_DOCS = [
     'docs/app.html',
     'docs/app.js',
     'docs/sw.js',
-    '.github/workflows/seyd-yaar-validate-run.yml',
 ]
 OPTIONAL_CORE = [
     'backend/seydyaar/pipeline/run_daily.py',
